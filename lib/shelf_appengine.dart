@@ -57,43 +57,45 @@ class DirectoryIndexServeMode {
 /// `indexFileName`. `index.html` is the default.
 //TODO(kevmoo) better docs.
 Handler assetHandler(
-    {DirectoryIndexServeMode directoryIndexServeMode: DirectoryIndexServeMode.NONE,
-    String indexFileName: "index.html"}) => (Request request) {
-  var path = request.url.path;
-  var indexPath = path + indexFileName;
+        {DirectoryIndexServeMode directoryIndexServeMode: DirectoryIndexServeMode.NONE,
+        String indexFileName: "index.html"}) =>
+    (Request request) {
+      var path = request.url.path;
+      var indexPath = path + indexFileName;
 
-  // If the path requested is a directory root we might serve an index.html
-  // file depending on [directoryIndexServeMode].
-  if (path.endsWith("/")) {
-    if (directoryIndexServeMode == DirectoryIndexServeMode.SERVE) {
-      path = indexPath;
-    } else if (directoryIndexServeMode == DirectoryIndexServeMode.REDIRECT) {
-      return new Response.found(indexPath);
-    } else if (directoryIndexServeMode ==
-        DirectoryIndexServeMode.REDIRECT_SEE_OTHER) {
-      return new Response.seeOther(indexPath);
-    } else if (directoryIndexServeMode ==
-        DirectoryIndexServeMode.REDIRECT_PERMANENT) {
-      return new Response.movedPermanently(indexPath);
-    }
-  }
+      // If the path requested is a directory root we might serve an index.html
+      // file depending on [directoryIndexServeMode].
+      if (path.endsWith("/")) {
+        if (directoryIndexServeMode == DirectoryIndexServeMode.SERVE) {
+          path = indexPath;
+        } else if (directoryIndexServeMode ==
+            DirectoryIndexServeMode.REDIRECT) {
+          return new Response.found(indexPath);
+        } else if (directoryIndexServeMode ==
+            DirectoryIndexServeMode.REDIRECT_SEE_OTHER) {
+          return new Response.seeOther(indexPath);
+        } else if (directoryIndexServeMode ==
+            DirectoryIndexServeMode.REDIRECT_PERMANENT) {
+          return new Response.movedPermanently(indexPath);
+        }
+      }
 
-  return ae.context.assets.read(path).then((stream) {
-    Map headers;
-    var contentType = mime.lookupMimeType(path);
-    if (contentType != null) {
-      headers = <String, String>{io.HttpHeaders.CONTENT_TYPE: contentType};
-    }
+      return ae.context.assets.read(path).then((stream) {
+        Map headers;
+        var contentType = mime.lookupMimeType(path);
+        if (contentType != null) {
+          headers = <String, String>{io.HttpHeaders.CONTENT_TYPE: contentType};
+        }
 
-    return new Response.ok(stream, headers: headers);
-  }, onError: (err, stack) {
-    ae.context.services.logging
-        .error('Error getting asset at path $path\n$err\n$stack');
-    // TODO(kevmoo): handle only the specific case of an asset not found
-    // https://github.com/dart-lang/appengine/issues/7
-    if (err is ae.AssetError) {
-      return new Response.notFound('not found');
-    }
-    return new Future.error(err, stack);
-  });
-};
+        return new Response.ok(stream, headers: headers);
+      }, onError: (err, stack) {
+        ae.context.services.logging
+            .error('Error getting asset at path $path\n$err\n$stack');
+        // TODO(kevmoo): handle only the specific case of an asset not found
+        // https://github.com/dart-lang/appengine/issues/7
+        if (err is ae.AssetError) {
+          return new Response.notFound('not found');
+        }
+        return new Future.error(err, stack);
+      });
+    };
